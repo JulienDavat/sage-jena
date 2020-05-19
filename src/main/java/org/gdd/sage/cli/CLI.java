@@ -141,6 +141,8 @@ public class CLI implements Callable<Void> {
         // duration
         // nb HTTP requests read
         // nb HTTP requests write
+        // data transfered read
+        // data transfered write
         // Avg. HTTP response time read
         // Avg. HTTP response time write
         // Avg. Resume time read
@@ -149,8 +151,9 @@ public class CLI implements Callable<Void> {
         // Avg. Suspend time write
         if (this.measure != null) {
             double duration = spy.getExecutionTime();
-            String csvLine = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s",
+            String csvLine = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
                     duration, spy.getNbCallsRead(), spy.getNbCallsWrite(),
+                    spy.getDataTransferRead(), spy.getDataTransferWrite(),
                     spy.getMeanHTTPTimesRead(), spy.getMeanHTTPTimesWrite(),
                     spy.getMeanResumeTimeRead(), spy.getMeanResumeTimeWrite(),
                     spy.getMeanSuspendTimeRead(), spy.getMeanSuspendTimeWrite());

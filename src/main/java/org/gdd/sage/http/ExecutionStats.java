@@ -14,6 +14,8 @@ public class ExecutionStats {
     private double executionTime;
     private int nbCallsRead;
     private int nbCallsWrite;
+    private int dataTransferRead;
+    private int dataTransferWrite;
     private List<Double> httpTimesRead;
     private List<Double> httpTimesWrite;
     private List<Double> resumeTimesRead;
@@ -25,6 +27,8 @@ public class ExecutionStats {
         executionTime = -1;
         nbCallsRead = 0;
         nbCallsWrite = 0;
+        dataTransferRead = 0;
+        dataTransferWrite = 0;
         httpTimesRead = new ArrayList<>();
         httpTimesWrite = new ArrayList<>();
         resumeTimesRead = new ArrayList<>();
@@ -43,6 +47,14 @@ public class ExecutionStats {
 
     public int getNbCallsWrite() {
         return nbCallsWrite;
+    }
+
+    public int getDataTransferRead() {
+        return dataTransferRead;
+    }
+
+    public int getDataTransferWrite() {
+        return dataTransferWrite;
     }
 
     public Double getMeanHTTPTimesRead() {
@@ -94,6 +106,14 @@ public class ExecutionStats {
     public void stopTimer() {
         double endTime = System.nanoTime();
         executionTime = (endTime - executionTime) / 1e9;
+    }
+
+    public void reportDataTransferRead(int bytes) {
+        dataTransferRead += bytes;
+    }
+
+    public void reportDataTransferWrite(int bytes) {
+        dataTransferWrite += bytes;
     }
 
     public void reportHTTPQueryRead(double execTime) {

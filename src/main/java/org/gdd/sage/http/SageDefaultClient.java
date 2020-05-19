@@ -333,6 +333,7 @@ public class SageDefaultClient implements SageRemoteClient {
      */
     private QueryResults decodeResponse(HttpResponse response, boolean isRead) throws IOException {
         String responseContent = IOUtils.toString(response.getContent(), Charset.forName("UTF-8"));
+        int responseSize = responseContent.getBytes("UTF-8").length;
 
         int statusCode = response.getStatusCode();
         if (statusCode != 200) {
@@ -340,8 +341,10 @@ public class SageDefaultClient implements SageRemoteClient {
         }
         SageResponse sageResponse = mapper.readValue(responseContent, new TypeReference<SageResponse>(){});
         if (isRead) {
+            spy.reportDataTransferRead(responseSize);
             spy.reportOverheadRead(sageResponse.stats.getResumeTime(), sageResponse.stats.getSuspendTime());
         } else {
+            spy.reportDataTransferWrite(responseSize);
             spy.reportOverheadWrite(sageResponse.stats.getResumeTime(), sageResponse.stats.getSuspendTime());
         }
         return new QueryResults(sageResponse.bindings, sageResponse.next, sageResponse.stats);
