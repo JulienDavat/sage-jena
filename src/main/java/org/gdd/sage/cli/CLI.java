@@ -14,7 +14,10 @@ import org.slf4j.Logger;
 import picocli.CommandLine;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -22,6 +25,7 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Main class for the Sage command-line interface
@@ -43,6 +47,9 @@ public class CLI implements Callable<Void> {
     @CommandLine.Option(names = { "--format" }, description = "Results format (Result set: raw, XML, JSON, CSV, TSV; Graph: RDF serialization)")
     public String format = "xml";
 
+    @CommandLine.Option(names = { "-o", "--output" }, description = "Evaluate SPARQL query in the given file")
+    public String output = null;
+
     @CommandLine.Option(names = { "-m", "--measure" }, description = "Measure query execution stats and append it to a file")
     public String measure = null;
 
@@ -51,6 +58,9 @@ public class CLI implements Callable<Void> {
 
     @CommandLine.Option(names = { "--bucket-size" }, description = "Bucket size for SPARQL UPDATE query evaluation")
     public int bucketSize = 100;
+
+    @CommandLine.Option(names = { "--timeout" }, description = "Stops the query execution after a given amount of time")
+    public long timeout = 600;
 
     @CommandLine.Option(names = { "--time" }, description = "Display the the query execution time at the end")
     public boolean time = false;
@@ -81,9 +91,18 @@ public class CLI implements Callable<Void> {
             queryString = this.query;
         }
 
+        // define the output on which print the query execution result
+        OutputStream oStream = null;
+        if (this.output != null) {
+            oStream = new FileOutputStream(new File(this.output));
+        } else {
+            oStream = System.out;
+        }
+
         Dataset federation;
         SageConfigurationFactory factory;
         ExecutionStats spy = new ExecutionStats();
+        String state;
 
         // check if we are dealing with a classic query or an UPDATE query
         if (this.update) {
@@ -97,6 +116,7 @@ public class CLI implements Callable<Void> {
             spy.startTimer();
             executor.execute(queryString);
             spy.stopTimer();
+            state = "complete";
         } else {
             Query parseQuery = QueryFactory.create(queryString);
             // get the auto-configuration factory based on query execution context (federated or not)
@@ -116,7 +136,7 @@ public class CLI implements Callable<Void> {
             QueryExecutor executor;
 
             if (parseQuery.isSelectType()) {
-                executor = new SelectQueryExecutor(format);
+                executor = new SelectQueryExecutor(oStream, format, timeout);
             } else if (parseQuery.isAskType()) {
                 executor = new AskQueryExecutor(format);
             } else if (parseQuery.isConstructType()) {
@@ -125,7 +145,14 @@ public class CLI implements Callable<Void> {
                 executor = new DescribeQueryExecutor(format);
             }
             spy.startTimer();
-            executor.execute(federation, parseQuery);
+            try {
+                executor.execute(federation, parseQuery);
+                state = "complete";
+            } catch (TimeoutException e) {
+                state = "interrupted";
+            } catch (Exception e) {
+                state = "error";
+            }
             spy.stopTimer();
         }
 
@@ -149,16 +176,17 @@ public class CLI implements Callable<Void> {
         // Avg. Resume time write
         // Avg. Suspend time read
         // Avg. Suspend time write
+        // Execution state: complete if query execution has been completed, interrupted if time limitation has been reached
         if (this.measure != null) {
             double duration = spy.getExecutionTime();
-            String csvLine = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
+            String csvLine = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
                     duration, spy.getNbCallsRead(), spy.getNbCallsWrite(),
                     spy.getDataTransferRead(), spy.getDataTransferWrite(),
                     spy.getMeanHTTPTimesRead(), spy.getMeanHTTPTimesWrite(),
                     spy.getMeanResumeTimeRead(), spy.getMeanResumeTimeWrite(),
-                    spy.getMeanSuspendTimeRead(), spy.getMeanSuspendTimeWrite());
+                    spy.getMeanSuspendTimeRead(), spy.getMeanSuspendTimeWrite(), state);
             try {
-                Files.write(Paths.get(this.measure), csvLine.getBytes(), StandardOpenOption.APPEND);
+                Files.write(Paths.get(this.measure), csvLine.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -167,6 +195,7 @@ public class CLI implements Callable<Void> {
         // cleanup connections
         federation.close();
         factory.close();
+        oStream.close();
         return null;
     }
 

@@ -1,5 +1,8 @@
 package org.gdd.sage.cli;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
 
@@ -8,5 +11,5 @@ import org.apache.jena.query.Query;
  * @author Thomas Minier
  */
 public interface QueryExecutor {
-    void execute(Dataset dataset, Query query);
+    void execute(Dataset dataset, Query query) throws TimeoutException, InterruptedException, ExecutionException;
 }

@@ -57,81 +57,81 @@ public class ExecutionStats {
         return dataTransferWrite;
     }
 
-    public Double getMeanHTTPTimesRead() {
+    public synchronized Double getMeanHTTPTimesRead() {
         if (httpTimesRead.isEmpty()) {
             return 0.0;
         }
         return Stats.meanOf(httpTimesRead);
     }
 
-    public Double getMeanHTTPTimesWrite() {
+    public synchronized Double getMeanHTTPTimesWrite() {
         if (httpTimesWrite.isEmpty()) {
             return 0.0;
         }
         return Stats.meanOf(httpTimesWrite);
     }
 
-    public Double getMeanResumeTimeRead() {
+    public synchronized Double getMeanResumeTimeRead() {
         if (resumeTimesRead.isEmpty()) {
             return 0.0;
         }
         return Stats.meanOf(resumeTimesRead);
     }
 
-    public Double getMeanSuspendTimeRead() {
+    public synchronized Double getMeanSuspendTimeRead() {
         if (suspendTimesRead.isEmpty()) {
             return 0.0;
         }
         return Stats.meanOf(suspendTimesRead);
     }
 
-    public Double getMeanResumeTimeWrite() {
+    public synchronized Double getMeanResumeTimeWrite() {
         if (resumeTimesWrite.isEmpty()) {
             return 0.0;
         }
         return Stats.meanOf(resumeTimesWrite);
     }
 
-    public Double getMeanSuspendTimeWrite() {
+    public synchronized Double getMeanSuspendTimeWrite() {
         if (suspendTimesWrite.isEmpty()) {
             return 0.0;
         }
         return Stats.meanOf(suspendTimesWrite);
     }
 
-    public void startTimer() {
+    public synchronized void startTimer() {
         executionTime = System.nanoTime();
     }
 
-    public void stopTimer() {
+    public synchronized void stopTimer() {
         double endTime = System.nanoTime();
         executionTime = (endTime - executionTime) / 1e9;
     }
 
-    public void reportDataTransferRead(int bytes) {
+    public synchronized void reportDataTransferRead(int bytes) {
         dataTransferRead += bytes;
     }
 
-    public void reportDataTransferWrite(int bytes) {
+    public synchronized void reportDataTransferWrite(int bytes) {
         dataTransferWrite += bytes;
     }
 
-    public void reportHTTPQueryRead(double execTime) {
+    public synchronized void reportHTTPQueryRead(double execTime) {
         nbCallsRead++;
         httpTimesRead.add(execTime);
     }
 
-    public void reportHTTPQueryWrite(double execTime) {
+    public synchronized void reportHTTPQueryWrite(double execTime) {
         nbCallsWrite++;
         httpTimesWrite.add(execTime);
     }
 
-    public void reportOverheadRead(double resumeTime, double suspendTime) {
+    public synchronized void reportOverheadRead(double resumeTime, double suspendTime) {
         resumeTimesRead.add(resumeTime);
         suspendTimesRead.add(suspendTime);
     }
 
-    public void reportOverheadWrite(double resumeTime, double suspendTime) {
+    public synchronized void reportOverheadWrite(double resumeTime, double suspendTime) {
         resumeTimesWrite.add(resumeTime);
         suspendTimesWrite.add(suspendTime);
     }
