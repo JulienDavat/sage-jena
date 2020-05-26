@@ -105,7 +105,7 @@ public class ExecutionStats {
 
     public synchronized void stopTimer() {
         double endTime = System.nanoTime();
-        executionTime = (endTime - executionTime) / 1e9;
+        executionTime = (endTime - executionTime) / 1e6;
     }
 
     public synchronized void reportDataTransferRead(int bytes) {
