@@ -1,5 +1,6 @@
 package org.gdd.sage.cli;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.time.Duration;
 import java.util.concurrent.Callable;
@@ -40,7 +41,12 @@ public class SelectQueryExecutor implements QueryExecutor {
                     ResultSet results = qexec.execSelect();
                     switch (format) {
                         case "raw":
-                            results.forEachRemaining(System.out::println);
+                            results.forEachRemaining(x -> {
+                                String raw = String.format("%s\n", x.toString());
+                                try {
+                                    out.write(raw.getBytes());
+                                } catch (IOException e) { }
+                            });
                             break;
                         case "xml":
                             ResultSetFormatter.outputAsXML(out, results);
